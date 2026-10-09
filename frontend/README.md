@@ -1,7 +1,5 @@
 # OfficeBill Frontend 🧾
 
-**Live Demo:** [office-bills.vercel.app](https://office-bills.vercel.app)
-
 OfficeBill is a streamlined, utilitarian billing and inventory management system designed specifically for daily office operations. Built as a focused variant of a larger master project, it prioritizes speed, clarity, and IRD (Inland Revenue Department, Nepal) compliance without the clutter of premium SaaS features.
 
 ---
@@ -107,18 +105,6 @@ OfficeBill was intentionally simplified from its premium master counterpart to s
 2. **No Distractions:** Removed dark mode, command palettes, and complex charting in favor of dense, readable data tables.
 3. **Print-First Invoices:** The `InvoiceView` component uses flexbox and CSS break-inside rules to ensure signatures and totals never get pushed to an orphaned second page.
 4. **Local-First Demo:** All data is currently persisted in `localStorage` to allow immediate testing without a backend. The store architecture is designed to be easily swapped with REST/GraphQL API calls later.
-
----
-
-## ☁️ Deployment (Vercel)
-
-This project is configured for seamless deployment on Vercel.
-
-- **Framework Preset:** Vite
-- **Build Command:** `npm run build`
-- **Output Directory:** `dist`
-
-Pushing to the `main` branch will automatically trigger a new production deployment.
 
 ---
 

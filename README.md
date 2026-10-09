@@ -2,7 +2,7 @@
 
 **A complete billing, inventory, and dues management system for Nepali offices and small businesses.**
 
-**Live:** [office-bills.vercel.app](https://office-bills.vercel.app) · **Frontend docs:** [frontend/README.md](frontend/README.md)
+**Frontend docs:** [frontend/README.md](frontend/README.md)
 
 ---
 
@@ -102,12 +102,15 @@ Default staff password (when left blank at creation): `aura123` — settable per
 
 ---
 
-## ☁️ Deployment
+## 🐳 Running with Docker
 
-- **Host:** Vercel — auto-deploys from `main`
-- **Root directory:** `frontend`
-- **Build command:** `npm run build`
-- **Output directory:** `dist`
+```bash
+docker compose up --build
+```
+
+- Frontend → http://localhost:5173
+- Backend API → http://localhost:5000
+- MySQL → localhost:3307
 
 ---
 

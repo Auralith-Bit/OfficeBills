@@ -1,0 +1,47 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: aurabill_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: aurobill_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./backend
+    container_name: aurabill_backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 5000
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: rootpass
+      DB_NAME: aurobill_db
+      DB_PORT: 3306
+      JWT_SECRET: super_secure_officebills_jwt_secret_key_2026
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build: ./frontend
+    container_name: aurabill_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+volumes:
+  mysql_data:
