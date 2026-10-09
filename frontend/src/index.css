@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background: #f1f5f9;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 1px 2px 0 rgb(16 24 40 / 0.06), 0 1px 3px 0 rgb(16 24 40 / 0.10);
+  }
+
+  .btn, .btn-primary, .btn-outline, .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+    outline: none;
+  }
+  .btn:focus-visible, .btn-primary:focus-visible, .btn-outline:focus-visible, .btn-ghost:focus-visible {
+    box-shadow: 0 0 0 2px rgb(15 118 110 / 0.4);
+  }
+  .btn:disabled, .btn-primary:disabled, .btn-outline:disabled, .btn-ghost:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary { background: #115e59; padding: 0.5rem 1rem; color: #ffffff; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+  .btn-primary:hover { background: #134e4a; }
+
+  .btn-outline { border: 1px solid #cbd5e1; background: #ffffff; padding: 0.5rem 1rem; color: #334155; }
+  .btn-outline:hover { background: #f8fafc; }
+
+  .btn-ghost { padding: 0.5rem; color: #64748b; }
+  .btn-ghost:hover { background: #f1f5f9; color: #1e293b; }
+
+  .input {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+  .input:focus { border-color: #0f766e; box-shadow: 0 0 0 3px rgb(15 118 110 / 0.3); }
+
+  .label { display: block; margin-bottom: 0.375rem; font-size: 0.875rem; font-weight: 500; color: #334155; }
+
+  .th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+  .td { padding: 0.75rem 1rem; font-size: 0.875rem; color: #475569; }
+}
+
+/* ================= Dark mode (pure CSS overrides) ================= */
+.dark body { background: #0f172a; color: #e2e8f0; }
+.dark .card { background: #1e293b; border-color: #334155; box-shadow: none; }
+.dark .input { background: #0f172a; border-color: #475569; color: #f1f5f9; }
+.dark .input::placeholder { color: #64748b; }
+.dark .label { color: #cbd5e1; }
+.dark .th { color: #94a3b8; }
+.dark .td { color: #cbd5e1; }
+.dark .btn-outline { background: #1e293b; border-color: #475569; color: #e2e8f0; }
+.dark .btn-outline:hover { background: #334155; }
+.dark .btn-ghost { color: #94a3b8; }
+.dark .btn-ghost:hover { background: #334155; color: #f1f5f9; }
+
+.dark .bg-white { background: #1e293b; }
+.dark .bg-slate-50 { background: #0f172a; }
+.dark .bg-slate-100 { background: #1e293b; }
+.dark .hover\:bg-slate-50:hover { background: #334155; }
+.dark .hover\:bg-slate-100:hover { background: #334155; }
+
+.dark .border-slate-100, .dark .border-slate-200 { border-color: #334155; }
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #334155; }
+
+.dark .text-slate-900 { color: #f1f5f9; }
+.dark .text-slate-800 { color: #f1f5f9; }
+.dark .text-slate-700 { color: #e2e8f0; }
+.dark .text-slate-600 { color: #cbd5e1; }
+.dark .text-slate-500 { color: #94a3b8; }
+.dark .text-slate-400 { color: #64748b; }
+
+.dark .bg-green-50 { background: rgb(20 83 45 / 0.25); }
+.dark .bg-red-50 { background: rgb(127 29 29 / 0.25); }
+.dark .bg-teal-50 { background: rgb(30 58 138 / 0.25); }
+.dark .bg-amber-50 { background: rgb(120 53 15 / 0.25); }
+.dark .bg-purple-50 { background: rgb(88 28 135 / 0.25); }
+.dark .bg-green-100 { background: rgb(20 83 45 / 0.4); }
+.dark .bg-teal-100 { background: rgb(30 58 138 / 0.4); }
+
+.dark #invoice-doc,
+.dark #invoice-doc .bg-slate-50,
+.dark #invoice-doc .bg-slate-100 { background: #ffffff; }
+.dark #invoice-doc .text-slate-900 { color: #0f172a; }
+.dark #invoice-doc .text-slate-800 { color: #1e293b; }
+.dark #invoice-doc .text-slate-600 { color: #475569; }
+.dark #invoice-doc .text-slate-500 { color: #64748b; }
+.dark #invoice-doc .text-slate-400 { color: #94a3b8; }
+.dark #invoice-doc .border-slate-100,
+.dark #invoice-doc .border-slate-200,
+.dark #invoice-doc .border-slate-300 { border-color: #cbd5e1; }
+
+/* ================= Print stylesheet (Multi-page ready) ================= */
+@media print {
+  @page { 
+    size: A4; 
+    margin: 1.5cm 1.5cm 2cm 1.5cm; 
+  }
+
+  html, body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    /* Prevent empty pages from being generated at the end */
+    orphans: 0;
+    widows: 0;
+  }
+
+  /* Kill app chrome */
+  aside, header, .print\:hidden { display: none !important; }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+  .lg\:ml-64 { margin-left: 0 !important; }
+
+  /* Flatten the document card */
+  .card {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  /* Allow the invoice to flow naturally across multiple pages */
+  #invoice-doc {
+    display: block !important; /* Override flexbox for print flow */
+    min-height: 0 !important;
+  }
+
+  /* Repeat the table header (SN, Particulars, etc.) on every new page */
+  thead { display: table-header-group; }
+  
+  /* Never split a single item row across two pages */
+  tr { break-inside: avoid; page-break-inside: avoid; }
+
+  /* Keep Totals, Amount in Words, and Signature together on the last page */
+  .print-avoid { 
+    break-inside: avoid; 
+    page-break-inside: avoid; 
+  }
+}
