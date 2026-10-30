@@ -24,7 +24,7 @@ export default function Signup() {
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     if (!businessName.trim()) { setError('Business name is required.'); return; }
@@ -34,8 +34,7 @@ export default function Signup() {
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
     if (password !== confirm) { setError('Passwords do not match.'); return; }
 
-    // Step 1 done → generate + "send" OTP, park the payload, go verify
-    const res = requestSignupOtp(email);
+    const res = await requestSignupOtp(email);
     if (!res.ok) { setError(res.error ?? 'Could not send verification code.'); return; }
 
     localStorage.setItem(PENDING_SIGNUP_KEY, JSON.stringify({

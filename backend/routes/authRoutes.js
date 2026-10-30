@@ -4,8 +4,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { JWT_SECRET } = require('../middleware/authMiddleware');
+const { generateOtp, sendOtpEmail } = require('../utils/email');
 
-// Helper to remove password from user object
+const OTP_TTL_MS = 10 * 60 * 1000;
+const otpStore = new Map();
+
+const normalizeEmail = (email) => (email || '').trim().toLowerCase();
+
 const cleanUser = (u) => {
   if (!u) return null;
   const copy = { ...u };
@@ -13,6 +18,140 @@ const cleanUser = (u) => {
   copy.active = Boolean(copy.active);
   return copy;
 };
+
+const getStoredOtp = (email) => otpStore.get(normalizeEmail(email));
+const setStoredOtp = (email, code) => otpStore.set(normalizeEmail(email), { code, expiresAt: Date.now() + OTP_TTL_MS });
+const clearStoredOtp = (email) => otpStore.delete(normalizeEmail(email));
+
+router.post('/request-signup-otp', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ ok: false, error: 'Enter a valid email address.' });
+    }
+
+    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ ok: false, error: 'An account with this email already exists. Please log in.' });
+    }
+
+    const code = generateOtp();
+    const result = await sendOtpEmail({
+      email,
+      otp: code,
+      subject: 'OfficeBill email verification code',
+      title: 'Verify your email address',
+      description: 'Use the code below to finish creating your OfficeBill account.',
+    });
+
+    setStoredOtp(email, code);
+
+    if (!result.ok) {
+      return res.json({ ok: true, otp: code, email, message: result.message });
+    }
+
+    return res.json({ ok: true, email, message: 'Verification code sent to your email address.' });
+  } catch (err) {
+    console.error('POST /api/auth/request-signup-otp error:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+router.post('/verify-signup-otp', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const code = (req.body.code || '').trim();
+    const ticket = getStoredOtp(email);
+
+    if (!ticket) {
+      return res.status(400).json({ ok: false, error: 'No active OTP request. Please start sign-up again.' });
+    }
+
+    if (Date.now() > ticket.expiresAt) {
+      clearStoredOtp(email);
+      return res.status(400).json({ ok: false, error: 'OTP expired. Please resend the code.' });
+    }
+
+    if (ticket.code !== code) {
+      return res.status(400).json({ ok: false, error: 'Incorrect OTP. Check the code and try again.' });
+    }
+
+    clearStoredOtp(email);
+    res.json({ ok: true, message: 'Email verified successfully.' });
+  } catch (err) {
+    console.error('POST /api/auth/verify-signup-otp error:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+router.post('/request-reset-otp', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ ok: false, error: 'Enter a valid email address.' });
+    }
+
+    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length === 0) {
+      return res.status(404).json({ ok: false, error: 'No account found with this email address.' });
+    }
+
+    const code = generateOtp();
+    const result = await sendOtpEmail({
+      email,
+      otp: code,
+      subject: 'OfficeBill password reset code',
+      title: 'Reset your password',
+      description: 'Use the code below to reset your OfficeBill password.',
+    });
+
+    setStoredOtp(email, code);
+
+    if (!result.ok) {
+      return res.json({ ok: true, otp: code, email, message: result.message });
+    }
+
+    return res.json({ ok: true, email, message: 'A password reset code has been sent to your email.' });
+  } catch (err) {
+    console.error('POST /api/auth/request-reset-otp error:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+router.post('/verify-reset-otp', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const code = (req.body.otp || '').trim();
+    const newPassword = (req.body.newPassword || '').trim();
+    const ticket = getStoredOtp(email);
+
+    if (!ticket) {
+      return res.status(400).json({ ok: false, error: 'No active OTP request. Please request a new code.' });
+    }
+
+    if (Date.now() > ticket.expiresAt) {
+      clearStoredOtp(email);
+      return res.status(400).json({ ok: false, error: 'OTP expired. Please resend the code.' });
+    }
+
+    if (ticket.code !== code) {
+      return res.status(400).json({ ok: false, error: 'Incorrect OTP. Check the code and try again.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ ok: false, error: 'Password must be at least 6 characters.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+    clearStoredOtp(email);
+
+    res.json({ ok: true, message: 'Password updated successfully.' });
+  } catch (err) {
+    console.error('POST /api/auth/verify-reset-otp error:', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 // GET /api/auth/state — list vendors and users (without password)
 router.get('/state', async (req, res) => {

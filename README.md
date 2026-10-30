@@ -56,7 +56,7 @@ npm run build
 npm run preview
 ```
 
-First run: click **Sign up** to register your business (the owner becomes Admin). A demo OTP is shown on-screen because real email delivery arrives with the backend.
+First run: click **Sign up** to register your business (the owner becomes Admin). A verification code is sent to the email address you use during signup, with a console fallback for local testing when SMTP is not configured.
 
 ---
 
@@ -104,6 +104,8 @@ Default staff password (when left blank at creation): `aura123` — settable per
 
 ## 🐳 Running with Docker
 
+Configure `backend/.env` from `backend/.env.example` with your SMTP settings before starting the stack. Compose supplies the container's MySQL connection settings; the backend `.env` provides the email configuration.
+
 ```bash
 docker compose up --build
 ```
@@ -125,6 +127,6 @@ docker compose up --build
 
 ## 👨‍💻 Credits
 
-**Designed and Developed by Auralith Bit and Team**
+**Designed and Developed by Auralith Bit**
 
 _OfficeBill — reliable, print-perfect, office-ready billing._

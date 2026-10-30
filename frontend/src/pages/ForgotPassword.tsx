@@ -10,7 +10,6 @@ export default function ForgotPassword() {
   const { requestPasswordReset, resetPassword } = useAuth();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [demoOtp, setDemoOtp] = useState('');
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -24,24 +23,23 @@ export default function ForgotPassword() {
     return () => clearInterval(t);
   }, [seconds]);
 
-  const sendOtp = () => {
+  const sendOtp = async () => {
     setError('');
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) { setError('Enter a valid email address.'); return; }
-    const res = requestPasswordReset(email);
+    const res = await requestPasswordReset(email);
     if (!res.ok) { setError(res.error ?? 'Could not send OTP.'); return; }
-    setDemoOtp(res.otp ?? '');
     setOtp('');
     setStep('reset');
     setSeconds(30);
   };
 
-  const submitReset = (e: React.FormEvent) => {
+  const submitReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!/^\d{6}$/.test(otp.trim())) { setError('Enter the 6-digit OTP.'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
     if (password !== confirm) { setError('Passwords do not match.'); return; }
-    const res = resetPassword(email, otp, password);
+    const res = await resetPassword(email, otp, password);
     if (!res.ok) { setError(res.error ?? 'Reset failed.'); return; }
     setStep('done');
   };
@@ -89,9 +87,8 @@ export default function ForgotPassword() {
             We sent a 6-digit code to <b className="text-slate-700">{email}</b>. Enter it below with your new password.
           </p>
 
-          <div className="mt-4 rounded-lg border border-dashed border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-            Demo mode (no email gateway yet) — your OTP is{' '}
-            <b className="font-mono text-sm tracking-widest">{demoOtp}</b>
+          <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-xs text-teal-800">
+            We sent a 6-digit code to <b>{email}</b>. Check your inbox and spam folder if needed.
           </div>
 
           {error && <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}

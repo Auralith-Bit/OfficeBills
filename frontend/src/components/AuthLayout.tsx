@@ -64,7 +64,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         {/* Developer credit — visible on every screen size */}
         <p className="mt-8 text-center text-xs text-slate-400">
-          Designed and Developed by <span className="font-semibold text-slate-600">Auralith Bit and Team</span>
+          Designed and Developed by <span className="font-semibold text-slate-600">Auralith Bit</span>
         </p>
       </div>
     </div>

@@ -47,7 +47,7 @@ interface SignupInput {
 interface StaffInput { name: string; email: string; role: Role; password?: string; phone?: string; }
 type StaffPatch = Partial<Pick<UserAccount, 'name' | 'email' | 'phone' | 'role' | 'active'>>;
 interface Result { ok: boolean; error?: string; }
-interface ResetResult extends Result { otp?: string; }
+interface ResetResult extends Result { otp?: string; message?: string; }
 
 interface ResetTicket { email: string; code: string; expiresAt: number; }
 
@@ -59,10 +59,10 @@ interface AuthContextValue {
   signup: (input: SignupInput) => Promise<Result> | Result;
   login: (email: string, password: string, remember?: boolean) => Promise<Result> | Result;
   logout: () => void;
-  requestPasswordReset: (email: string) => ResetResult;
-  resetPassword: (email: string, otp: string, newPassword: string) => Result;
-  requestSignupOtp: (email: string) => ResetResult;
-  confirmSignupOtp: (email: string, code: string) => Promise<Result> | Result;
+  requestPasswordReset: (email: string) => Promise<ResetResult>;
+  resetPassword: (email: string, otp: string, newPassword: string) => Promise<Result>;
+  requestSignupOtp: (email: string) => Promise<ResetResult>;
+  confirmSignupOtp: (email: string, code: string) => Promise<Result>;
   demoSignupOtp: string | null;
   addStaffUser: (input: StaffInput) => Promise<Result> | Result;
   updateStaffUser: (id: string, patch: StaffPatch) => Promise<Result> | Result;
@@ -103,7 +103,6 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
     }))
   );
   const [session, setSession] = useState<Session | null>(loadSession);
-  const [resetTicket, setResetTicket] = useState<ResetTicket | null>(null);
   const [signupTicket, setSignupTicket] = useState<ResetTicket | null>(null);
 
   const persistVendors = (v: Vendor[]) => { setVendors(v); localStorage.setItem('OfficeBill_vendors', JSON.stringify(v)); };
@@ -204,44 +203,68 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
   const logout = () => persistSession(null);
 
   // ---------- OTP password reset ----------
-  const requestPasswordReset = (email: string): ResetResult => {
-    const user = users.find(u => u.email === email.trim().toLowerCase());
-    if (!user) return { ok: false, error: 'No account found with this email address.' };
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    setResetTicket({ email: user.email, code, expiresAt: Date.now() + 10 * 60 * 1000 });
-    return { ok: true, otp: code };
+  const requestPasswordReset = async (email: string): Promise<ResetResult> => {
+    const clean = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(clean)) return { ok: false, error: 'Enter a valid email address.' };
+
+    const apiRes = await apiRequest<{ ok: boolean; otp?: string; message?: string }>('/auth/request-reset-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email: clean }),
+    });
+
+    if (!apiRes.ok || !apiRes.data) {
+      return { ok: false, error: apiRes.error || 'Could not send OTP.' };
+    }
+
+    return { ok: true, otp: apiRes.data.otp || '', message: apiRes.data.message || 'OTP sent.' };
   };
 
-  const resetPassword = (email: string, otp: string, newPassword: string): Result => {
-    const ticket = resetTicket;
-    if (!ticket || ticket.email !== email.trim().toLowerCase()) {
-      return { ok: false, error: 'No active OTP request. Please request a new code.' };
+  const resetPassword = async (email: string, otp: string, newPassword: string): Promise<Result> => {
+    const clean = email.trim().toLowerCase();
+    const apiRes = await apiRequest<{ ok: boolean; message?: string }>('/auth/verify-reset-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email: clean, otp, newPassword }),
+    });
+
+    if (!apiRes.ok || !apiRes.data) {
+      return { ok: false, error: apiRes.error || 'Reset failed.' };
     }
-    if (Date.now() > ticket.expiresAt) return { ok: false, error: 'OTP expired. Please resend the code.' };
-    if (ticket.code !== otp.trim()) return { ok: false, error: 'Incorrect OTP. Check the code and try again.' };
-    if (newPassword.length < 6) return { ok: false, error: 'Password must be at least 6 characters.' };
-    persistUsers(users.map(u => (u.email === ticket.email ? { ...u, password: newPassword } : u)));
-    setResetTicket(null);
+
     return { ok: true };
   };
 
   // ---------- Signup email verification (OTP) ----------
-  const requestSignupOtp = (email: string): ResetResult => {
+  const requestSignupOtp = async (email: string): Promise<ResetResult> => {
     const clean = email.trim().toLowerCase();
     if (!/^\S+@\S+\.\S+$/.test(clean)) return { ok: false, error: 'Enter a valid email address.' };
-    if (users.some(u => u.email === clean)) return { ok: false, error: 'An account with this email already exists. Please log in.' };
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    setSignupTicket({ email: clean, code, expiresAt: Date.now() + 10 * 60 * 1000 });
-    return { ok: true, otp: code };
+
+    const apiRes = await apiRequest<{ ok: boolean; otp?: string; message?: string }>('/auth/request-signup-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email: clean }),
+    });
+
+    if (!apiRes.ok || !apiRes.data) {
+      return { ok: false, error: apiRes.error || 'Could not send verification code.' };
+    }
+
+    if (apiRes.data.otp) {
+      setSignupTicket({ email: clean, code: apiRes.data.otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    }
+
+    return { ok: true, otp: apiRes.data.otp || '', message: apiRes.data.message || 'Verification code sent.' };
   };
 
-  const confirmSignupOtp = (email: string, code: string): Result => {
+  const confirmSignupOtp = async (email: string, code: string): Promise<Result> => {
     const clean = email.trim().toLowerCase();
-    if (!signupTicket || signupTicket.email !== clean) {
-      return { ok: false, error: 'No active OTP request. Please start sign-up again.' };
+    const apiRes = await apiRequest<{ ok: boolean; message?: string }>('/auth/verify-signup-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email: clean, code }),
+    });
+
+    if (!apiRes.ok || !apiRes.data) {
+      return { ok: false, error: apiRes.error || 'Verification failed.' };
     }
-    if (Date.now() > signupTicket.expiresAt) return { ok: false, error: 'OTP expired. Please resend the code.' };
-    if (signupTicket.code !== code.trim()) return { ok: false, error: 'Incorrect OTP. Check the code and try again.' };
+
     setSignupTicket(null);
     return { ok: true };
   };

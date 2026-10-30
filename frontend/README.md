@@ -28,7 +28,7 @@ OfficeBill is a streamlined, utilitarian billing and inventory management system
   - Custom `@media print` CSS ensures invoices print cleanly on A4 paper.
   - Hides app UI (sidebars, buttons), prevents page-break orphans, and repeats table headers on multi-page invoices.
 - **📧 Secure Onboarding**
-  - Two-step signup flow with simulated Email OTP verification.
+  - Two-step signup flow with email OTP verification delivered through SMTP when configured.
 
 ---
 
@@ -110,6 +110,6 @@ OfficeBill was intentionally simplified from its premium master counterpart to s
 
 ## 👨‍💻 Credits
 
-**Designed and Developed by Auralith Bit and Team**
+**Designed and Developed by Auralith Bit**
 
 _Built with precision for reliable, day-to-day office billing operations._

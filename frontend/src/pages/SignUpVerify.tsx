@@ -13,7 +13,7 @@ interface PendingSignup {
 
 export default function SignupVerify() {
   const navigate = useNavigate();
-  const { signup, confirmSignupOtp, requestSignupOtp, demoSignupOtp } = useAuth();
+  const { signup, confirmSignupOtp, requestSignupOtp } = useAuth();
 
   const [pending] = useState<PendingSignup | null>(() => {
     try {
@@ -53,13 +53,13 @@ export default function SignupVerify() {
     navigate('/');
   };
 
-  const resend = () => {
+  const resend = async () => {
     setError('');
-    const res = requestSignupOtp(pending.email);
+    const res = await requestSignupOtp(pending.email);
     if (!res.ok) { setError(res.error ?? 'Could not resend the code.'); return; }
     setCode('');
     setCooldown(30);
-    setNotice('A new verification code has been sent.');
+    setNotice('A new verification code has been sent to your email.');
   };
 
   return (
@@ -76,13 +76,9 @@ export default function SignupVerify() {
         </div>
         <p className="mt-2 font-mono text-sm font-semibold text-slate-800">{pending.email}</p>
 
-        {/* DEMO notice — real email arrives with the backend */}
-        {demoSignupOtp && (
-          <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            <b>DEMO MODE:</b> email delivery arrives with the backend. Your code is{' '}
-            <span className="font-mono text-base font-bold tracking-widest">{demoSignupOtp}</span>
-          </p>
-        )}
+        <p className="mt-4 rounded-lg bg-teal-50 px-3 py-2 text-xs text-teal-800">
+          We sent a 6-digit verification code to your email address. Check your inbox and spam folder if needed.
+        </p>
         {notice && <p className="mt-2 rounded-lg bg-green-50 px-3 py-2 text-xs text-green-700">{notice}</p>}
         {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
